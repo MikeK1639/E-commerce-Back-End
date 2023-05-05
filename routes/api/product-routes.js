@@ -1,12 +1,46 @@
 const router = require('express').Router();
 const { Tag, Category, Product, ProductTag  } = require('../../models');
 
-router.get('/', async (req, res) => {
+router.get('/', (req, res) => {
+  // find all products
+  // be sure to include its associated Products
+  Product.findAll({
+    attributes: [
+      'id',
+      'product_name'
+    ],
+
+   include: [
+      {
+        model: Category,
+        attributes: ['id', 'category_name']
+      },
+      {
+        model: Tag,
+        attributes: ['id' , 'tag_name']
+      }
+    ]
+  })
+    .then(dbProductData => res.json(dbProductData))
+    .catch(err => {
+      console.log(err);
+      res.status(500).json(err);
+    });
+});
+ 
+router.get('/:id', async (req, res) => {
   try {
-    const productData = await Product.findAll();
-    res.status(200).json(productData);
+      const productData = await Product.findByPk(req.params.id, {
+          include: [{ model: Product }],
+      });
+
+      if (!productData) {
+          res.status(404).json({ message: 'No Driver found with that id!' });
+          return;
+      }
+      res.status(200).json(productData);
   } catch (err) {
-    res.status(500).json(err);
+      res.status(500).json(err);
   }
 });
 
